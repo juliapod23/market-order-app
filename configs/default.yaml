@@ -1,0 +1,27 @@
+# Default configuration for Order Book Pulse
+mode: replay   # 'replay' or 'live'
+symbol: btcusdt
+venue: binance_futures
+tick_size: 0.1
+price_decimals: 1
+levels: 5
+ws_url: wss://fstream.binance.com/stream?streams=btcusdt@depth20@100ms
+
+replay:
+  file: data/samples/sample_orderbook.jsonl
+  speedup: 5.0   # 1.0 = real-time; >1 faster; 0 = as-fast-as-possible
+
+features:
+  window_size: 20        # snapshots
+  update_rate_window: 30 # snapshots for update-rate calc
+  use_numba: false
+
+signals:
+  imbalance_threshold: 0.12
+  min_update_rate: 2.0   # per second
+  confirm_n: 2           # consecutive confirmations
+
+backtest:
+  horizon_seconds: 5
+  exit_on_opposite_signal: false
+  slippage_ticks: 0
