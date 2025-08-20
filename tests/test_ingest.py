@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from obp.ingest import ReplayIngestor
+from moa.ingest import ReplayIngestor
 
 def test_replay_iter(tmp_path: Path):
     p = tmp_path / "s.jsonl"

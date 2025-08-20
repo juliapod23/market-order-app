@@ -3,14 +3,22 @@ import argparse
 from pathlib import Path
 from collections import deque
 
+import sys
+from pathlib import Path
+
+# Ensure the project "src" is on sys.path
+SRC_DIR = Path(__file__).resolve().parents[1]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 import streamlit as st
 import pandas as pd
 
-from .config import load_config
-from .ingest import ReplayIngestor, BinanceIngestor
-from .features import FeatureEngine
-from .signals import ThresholdSignalEngine
-from .backtest import RollingBacktester
+from moa.config import load_config
+from moa.ingest import ReplayIngestor, BinanceIngestor
+from moa.features import FeatureEngine
+from moa.signals import ThresholdSignalEngine
+from moa.backtest import RollingBacktester
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -20,8 +28,8 @@ def parse_args():
 def main(cfg_path: str):
     cfg = load_config(cfg_path)
 
-    st.set_page_config(page_title="Order Book Pulse", layout="wide")
-    st.title("Order Book Pulse — Real-time Microstructure Signals")
+    st.set_page_config(page_title="Market Order App", layout="wide")
+    st.title("Market Order App — Real-time Microstructure Signals")
 
     left, right = st.columns([1, 2])
 
@@ -78,15 +86,21 @@ def main(cfg_path: str):
 
         if i % 5 == 0:
             # update charts every 5 ticks
-            df_mid = pd.DataFrame(history_mid).set_index("ts")
-            placeholder_chart.line_chart(df_mid)
+            df_mid = pd.DataFrame(history_mid)
+            if not df_mid.empty and "ts" in df_mid.columns:
+                placeholder_chart.line_chart(df_mid.set_index("ts"))
 
-            df_pnl = pd.DataFrame(cum_pnl).set_index("ts")
-            if not df_pnl.empty:
-                placeholder_pnl.line_chart(df_pnl)
+            # Seed cum_pnl so it always has a ts for the chart (optional but nice)
+            if not cum_pnl:
+                cum_pnl.append({"ts": snap.ts, "cum_pnl_ticks": cum})
+
+            df_pnl = pd.DataFrame(cum_pnl)
+            if not df_pnl.empty and "ts" in df_pnl.columns:
+                placeholder_pnl.line_chart(df_pnl.set_index("ts"))
 
             df_tape = pd.DataFrame(tape).tail(15)
             placeholder_table.dataframe(df_tape)
+
 
     st.success("Replay complete.")
     st.json(bt.summary())

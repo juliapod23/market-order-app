@@ -3,11 +3,11 @@ import argparse
 from pathlib import Path
 import csv
 
-from obp.config import load_config
-from obp.ingest import ReplayIngestor
-from obp.features import FeatureEngine
-from obp.signals import ThresholdSignalEngine
-from obp.backtest import RollingBacktester
+from moa.config import load_config
+from moa.ingest import ReplayIngestor
+from moa.features import FeatureEngine
+from moa.signals import ThresholdSignalEngine
+from moa.backtest import RollingBacktester
 
 def parse_args():
     p = argparse.ArgumentParser()

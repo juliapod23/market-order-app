@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
-from obp.schemas import BookSnapshot
-from obp.features import compute_imbalance, FeatureEngine
+from moa.schemas import BookSnapshot
+from moa.features import compute_imbalance, FeatureEngine
 
 def test_imbalance_balanced():
     bids = np.array([[100, 5],[99,5]])
