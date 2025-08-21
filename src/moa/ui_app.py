@@ -3,14 +3,19 @@ import argparse
 from pathlib import Path
 from collections import deque
 import pandas as pd
+import altair as alt
+import sys
+from pathlib import Path
+
+# --- bootstrap so Streamlit can import from src/ ---
+SRC_DIR = Path(__file__).resolve().parents[1]  # .../repo/src
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 from moa.config import load_config
 from moa.ingest import ReplayIngestor, BinanceIngestor
 from moa.features import FeatureEngine
 from moa.signals import ThresholdSignalEngine
 from moa.backtest import RollingBacktester
-import altair as alt
-import sys
-from pathlib import Path
 
 # --- header with left-aligned logo the size of the font ---
 import base64
