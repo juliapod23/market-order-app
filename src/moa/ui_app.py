@@ -59,7 +59,7 @@ def main(cfg_path: str):
     
     header_with_logo(
     title="Market Order — Real-Time Microstructure Signals",
-    logo_path="assets/logo.png", 
+    logo_path="assets/logo.PNG", 
     size_rem=5
     )
 
