@@ -5,3 +5,4 @@ websockets>=12.0
 pyyaml>=6.0
 streamlit>=1.36
 tqdm>=4.66
+altair>=5.2

@@ -2,23 +2,45 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from collections import deque
-
-import sys
-from pathlib import Path
-
-# Ensure the project "src" is on sys.path
-SRC_DIR = Path(__file__).resolve().parents[1]
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
-
-import streamlit as st
 import pandas as pd
-
 from moa.config import load_config
 from moa.ingest import ReplayIngestor, BinanceIngestor
 from moa.features import FeatureEngine
 from moa.signals import ThresholdSignalEngine
 from moa.backtest import RollingBacktester
+import altair as alt
+import sys
+from pathlib import Path
+
+# --- header with left-aligned logo the size of the font ---
+import base64
+import streamlit as st
+
+def header_with_logo(title: str, logo_path: str, size_rem: float = 1.6, gap_px: int = 10):
+    """
+    Renders a header with a logo to the left of the title text.
+    size_rem ~1.4–1.8 looks close to Streamlit's default title height.
+    """
+    logo_bytes = Path(logo_path).read_bytes()
+    b64 = base64.b64encode(logo_bytes).decode("utf-8")
+
+    st.markdown(
+        f"""
+        <div style="display:flex; align-items:center; gap:{gap_px}px;">
+            <img src="data:image/png;base64,{b64}" style="height:{size_rem}rem; width:auto; border-radius:6px;"/>
+            <span style="font-size:{size_rem}rem; font-weight:700; line-height:1;">
+                {title}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# Ensure the project "src" is on sys.path
+SRC_DIR = Path(__file__).resolve().parents[1]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -29,7 +51,12 @@ def main(cfg_path: str):
     cfg = load_config(cfg_path)
 
     st.set_page_config(page_title="Market Order App", layout="wide")
-    st.title("Market Order App — Real-time Microstructure Signals")
+    
+    header_with_logo(
+    title="Market Order — Real-Time Microstructure Signals",
+    logo_path="assets/logo.png", 
+    size_rem=5
+    )
 
     left, right = st.columns([1, 2])
 
@@ -88,15 +115,42 @@ def main(cfg_path: str):
             # update charts every 5 ticks
             df_mid = pd.DataFrame(history_mid)
             if not df_mid.empty and "ts" in df_mid.columns:
-                placeholder_chart.line_chart(df_mid.set_index("ts"))
+                df_mid["time"] = pd.to_datetime(df_mid["ts"], unit="s")
+                mid_chart = (
+                    alt.Chart(df_mid)
+                    .mark_line()
+                    .encode(
+                        x=alt.X("time:T", title="Time"),
+                        y=alt.Y("mid:Q", title="Mid Price"),
+                        tooltip=[alt.Tooltip("time:T", title="Time"), alt.Tooltip("mid:Q", title="Mid")]
+                    )
+                    .properties(title="Mid Price Over Time", width="container", height=400)
+                )
+                placeholder_chart.altair_chart(mid_chart, use_container_width=True)
 
-            # Seed cum_pnl so it always has a ts for the chart (optional but nice)
+            # seed cum_pnl so the chart has an initial point if desired
             if not cum_pnl:
                 cum_pnl.append({"ts": snap.ts, "cum_pnl_ticks": cum})
 
             df_pnl = pd.DataFrame(cum_pnl)
             if not df_pnl.empty and "ts" in df_pnl.columns:
-                placeholder_pnl.line_chart(df_pnl.set_index("ts"))
+                df_pnl["time"] = pd.to_datetime(df_pnl["ts"], unit="s")
+                pnl_chart = (
+                    alt.Chart(df_pnl)
+                    .mark_line()
+                    .encode(
+                        x=alt.X("time:T", title="Time"),
+                        y=alt.Y("cum_pnl_ticks:Q", title="Cumulative P&L (ticks)"),
+                        tooltip=[alt.Tooltip("time:T", title="Time"), alt.Tooltip("cum_pnl_ticks:Q", title="PnL (ticks)")]
+                    )
+                    .properties(title="Cumulative P&L", width="container", height=400)
+                )
+                placeholder_pnl.altair_chart(pnl_chart, use_container_width=True)
+
+            # keep the signal tape as-is
+            df_tape = pd.DataFrame(tape).tail(15)
+            placeholder_table.dataframe(df_tape)
+
 
             df_tape = pd.DataFrame(tape).tail(15)
             placeholder_table.dataframe(df_tape)
